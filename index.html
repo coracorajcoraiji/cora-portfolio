@@ -1,0 +1,467 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>紀眉秀 Cora</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@600;700&display=swap">
+<style>
+/* Layout concept: the page follows one order through the office, from order entry to export documents.
+   A clickable route map sits at the top; a live demo of the export-document helper sits below it. */
+:root {
+  --bg: #f2f4f7;
+  --surface: #ffffff;
+  --ink: #16202b;
+  --muted: #566475;
+  --line: #d5dbe3;
+  --accent: #2c4fd0;
+  --accent-ink: #ffffff;
+  --accent-soft: #e4eafc;
+  --stamp: #b8402a;
+  --ok: #1f7a4d;
+  --font-display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;
+  --font-body: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0f151c; --surface: #172029; --ink: #e8edf2; --muted: #9aa8b8; --line: #2b3745;
+    --accent: #8aa6ff; --accent-ink: #0f151c; --accent-soft: #1e2a4a; --stamp: #f0876f; --ok: #6fd0a0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0f151c; --surface: #172029; --ink: #e8edf2; --muted: #9aa8b8; --line: #2b3745;
+  --accent: #8aa6ff; --accent-ink: #0f151c; --accent-soft: #1e2a4a; --stamp: #f0876f; --ok: #6fd0a0;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 16px; line-height: 1.75;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 0;
+}
+.wrap { max-width: 980px; margin: 0 auto; display: flex; flex-direction: column; gap: 72px; padding-block: 48px 72px; }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; line-height: 1.3; }
+p { margin: 0; }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.label { font-family: var(--font-mono); font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+
+/* Hero */
+.hero { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); gap: 40px; align-items: end; }
+.hero h1 { font-size: clamp(34px, 6vw, 56px); letter-spacing: .02em; }
+.hero h1 span { font-family: var(--font-mono); font-weight: 400; font-size: .45em; letter-spacing: .06em; color: var(--muted); margin-left: .5em; white-space: nowrap; }
+.role { font-size: 18px; margin-top: 14px; font-weight: 500; }
+.lede { color: var(--muted); margin-top: 14px; max-width: 34em; }
+.facts { display: grid; grid-template-columns: 1fr; gap: 0; border-top: 2px solid var(--ink); }
+.facts div { display: flex; justify-content: space-between; gap: 16px; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: 14px; }
+.facts dt { color: var(--muted); }
+.facts dd { margin: 0; font-family: var(--font-mono); text-align: right; min-width: 0; overflow-wrap: anywhere; }
+.facts { margin: 0; }
+
+/* Section heads */
+.head { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+.head h2 { font-size: clamp(24px, 4vw, 32px); }
+.head p { color: var(--muted); max-width: 40em; }
+
+/* Route map */
+.route { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; position: relative; counter-reset: stop; }
+.route::before { content: ""; position: absolute; left: 10%; right: 10%; top: 21px; height: 2px; background: var(--line); }
+.stop { all: unset; box-sizing: border-box; cursor: pointer; position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 6px 6px; text-align: center; }
+.stop:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 8px; }
+.dot { width: 44px; height: 44px; border-radius: 50%; background: var(--surface); border: 2px solid var(--line); display: grid; place-items: center; font-family: var(--font-mono); font-size: 13px; color: var(--muted); position: relative; z-index: 1; transition: background .2s, border-color .2s, color .2s; }
+.stop:hover .dot { border-color: var(--accent); }
+.stop[aria-selected="true"] .dot { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.stop .name { font-size: 14px; font-weight: 500; line-height: 1.4; }
+.stop[aria-selected="true"] .name { color: var(--accent); }
+.panel { margin-top: 24px; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 28px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; }
+.panel h3 { font-size: 22px; margin-bottom: 10px; }
+.panel .col { min-width: 0; display: flex; flex-direction: column; gap: 10px; }
+.panel ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 8px; }
+.panel ul.fixes { padding-left: 0; list-style: none; gap: 14px; }
+.pair { display: grid; grid-template-columns: 2.6em minmax(0, 1fr); gap: 6px 10px; padding-bottom: 14px; border-bottom: 1px dashed var(--line); }
+.pair:last-child { padding-bottom: 0; border-bottom: 0; }
+.pair b { font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; color: var(--stamp); font-weight: 500; padding-top: 4px; }
+.pair span { min-width: 0; }
+.tag { align-self: flex-start; font-family: var(--font-mono); font-size: 12px; letter-spacing: .08em; padding: 2px 8px; border-radius: 3px; background: var(--accent-soft); color: var(--accent); }
+.tag.fix { background: transparent; border: 1px solid var(--stamp); color: var(--stamp); }
+
+/* Demo */
+.demo { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 28px; align-items: start; }
+.demo-copy { display: flex; flex-direction: column; gap: 14px; }
+.demo-copy ul { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; color: var(--muted); }
+.window { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; box-shadow: 0 10px 30px -18px rgba(0,0,0,.45); }
+.titlebar { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 14px; background: var(--accent); color: var(--accent-ink); font-size: 13px; }
+.titlebar span:last-child { font-family: var(--font-mono); font-size: 11px; opacity: .85; }
+.window { position: relative; }
+.ribbon { display: flex; align-items: center; gap: 14px; padding: 10px 14px; border-bottom: 1px solid var(--line); background: var(--bg); }
+.xbtn { font: inherit; font-size: 14px; padding: 6px 20px; border: 1px solid var(--muted); border-radius: 3px; background: var(--surface); color: var(--ink); cursor: pointer; box-shadow: 0 1px 0 var(--line); }
+.xbtn:hover { border-color: var(--accent); color: var(--accent); }
+.ribbon span { font-size: 13px; color: var(--muted); }
+.sheet { overflow-x: auto; }
+table.grid { border-collapse: collapse; width: 100%; font-size: 14px; }
+.grid th { background: var(--bg); color: var(--muted); font-weight: 400; font-family: var(--font-mono); font-size: 12px; border: 1px solid var(--line); padding: 3px 8px; }
+.grid td { border: 1px solid var(--line); padding: 6px 10px; vertical-align: top; }
+.grid td.l { color: var(--muted); white-space: nowrap; width: 7em; }
+.grid td.v { font-family: var(--font-mono); font-size: 13px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.grid td.v.flash { animation: flash 1.1s ease-out; }
+@keyframes flash { from { background: var(--accent-soft); } to { background: transparent; } }
+.status { font-size: 14px; padding: 10px 14px; border-top: 1px solid var(--line); min-height: 2.8em; color: var(--muted); }
+.status.good { color: var(--ok); }
+.dlg { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding: 16px; background: color-mix(in srgb, var(--ink) 38%, transparent); }
+.dlgbox { width: 100%; max-width: 340px; background: var(--surface); border: 1px solid var(--line); border-radius: 6px; overflow: hidden; box-shadow: 0 14px 34px -12px rgba(0,0,0,.5); }
+.dlgtitle { display: flex; justify-content: space-between; gap: 12px; padding: 8px 12px; background: var(--bg); border-bottom: 1px solid var(--line); font-size: 13px; }
+.dlgtitle span:last-child { font-family: var(--font-mono); color: var(--muted); }
+.dlgbody { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.dlgbody label { font-size: 15px; }
+.dlgbody input { font: inherit; font-size: 15px; padding: 7px 9px; border: 1px solid var(--line); border-radius: 4px; background: var(--bg); color: var(--ink); width: 100%; min-width: 0; }
+.dhint { font-size: 12px; color: var(--muted); min-height: 1.5em; }
+.dhint.bad { color: var(--stamp); }
+.dbtns { display: flex; gap: 8px; justify-content: flex-end; }
+button.btn { font: inherit; font-size: 14px; padding: 7px 16px; border-radius: 4px; border: 1px solid var(--accent); background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+button.btn.ghost { background: transparent; color: var(--accent); }
+.note { font-size: 13px; color: var(--muted); margin-top: 10px; }
+
+/* Fit */
+.fit { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0; border-top: 2px solid var(--ink); }
+.fit > div { padding: 18px 20px 18px 0; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 6px; }
+.fit h3 { font-size: 18px; }
+.fit p { color: var(--muted); font-size: 15px; }
+
+/* Base info */
+.info { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px; }
+.info h3 { font-size: 18px; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid var(--ink); }
+.info ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.info .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.pips { display: inline-flex; gap: 4px; }
+.pips b { width: 10px; height: 10px; border-radius: 50%; background: var(--line); }
+.pips b.on { background: var(--accent); }
+.edu strong { display: block; }
+.edu span { color: var(--muted); font-size: 14px; }
+
+/* Contact */
+.contact { border-top: 2px solid var(--ink); padding-top: 24px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 20px; align-items: end; }
+.contact h2 { font-size: 24px; margin-bottom: 8px; }
+.contact p { color: var(--muted); max-width: 32em; }
+.mail { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+.mail code { font-family: var(--font-mono); font-size: 16px; overflow-wrap: anywhere; user-select: all; }
+
+@media (max-width: 760px) {
+  .wrap { gap: 56px; padding-block: 32px 56px; }
+  .hero, .demo, .panel, .fit, .info { grid-template-columns: minmax(0, 1fr); }
+  .hero { gap: 28px; }
+  .route { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+  .route::before { left: 21px; right: auto; top: 22px; bottom: 22px; width: 2px; height: auto; }
+  .stop { flex-direction: row; text-align: left; gap: 14px; padding: 4px 0; }
+  .panel { padding: 20px; gap: 20px; }
+  .fit > div { padding-right: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div>
+      <p class="label">國貿 · 營運 · 流程</p>
+      <h1 style="margin-top:12px">紀眉秀<span>Cora</span></h1>
+      <p class="role">國貿助理暨營運專員</p>
+      <p class="lede">負責客戶訂單、生產協調、出貨與出口文件，也持續觀察流程裡的資訊落差，將其整理成可以執行的改善建議。</p>
+    </div>
+    <dl class="facts">
+      <div><dt>製造業國貿 / 營運經驗</dt><dd>7 年以上</dd></div>
+      <div><dt>最近一份工作</dt><dd>2018.11 – 2026.07</dd></div>
+      <div><dt>公司規模</dt><dd>30–100 人</dd></div>
+      <div><dt>TOEIC</dt><dd>835</dd></div>
+      <div><dt>所在地</dt><dd>台中市清水區</dd></div>
+    </dl>
+  </header>
+
+  <section aria-labelledby="route-h">
+    <div class="head">
+      <p>過去7年來，我的工作是讓所有訂單能順利走完全程。看我在那裡做什麼、遇到什麼狀況、提出過什麼改善。</p>
+      </div>
+    <div class="route" role="tablist" aria-label="訂單流程">
+      <button class="stop" role="tab" id="t0" aria-selected="true" aria-controls="panel" data-i="0"><span class="dot">1</span><span class="name">接單與前置確認</span></button>
+      <button class="stop" role="tab" id="t1" aria-selected="false" aria-controls="panel" data-i="1" tabindex="-1"><span class="dot">2</span><span class="name">生產協調</span></button>
+      <button class="stop" role="tab" id="t2" aria-selected="false" aria-controls="panel" data-i="2" tabindex="-1"><span class="dot">3</span><span class="name">交期與異常處理</span></button>
+      <button class="stop" role="tab" id="t3" aria-selected="false" aria-controls="panel" data-i="3" tabindex="-1"><span class="dot">4</span><span class="name">出貨安排</span></button>
+      <button class="stop" role="tab" id="t4" aria-selected="false" aria-controls="panel" data-i="4" tabindex="-1"><span class="dot">5</span><span class="name">出口文件</span></button>
+    </div>
+    <div class="panel" id="panel" role="tabpanel" aria-live="polite">
+      <div class="col">
+        <span class="tag">我負責</span>
+        <h3 id="p-title"></h3>
+        <ul id="p-do"></ul>
+      </div>
+      <div class="col">
+        <span class="tag fix">我提出的改善</span>
+        <ul id="p-fix" class="fixes"></ul>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="demo-h">
+    <div class="head">
+      <p class="label">自己做的小工具</p>
+      <h2 id="demo-h">出口文件輔助填寫工具</h2>
+    </div>
+    <div class="demo">
+      <div class="demo-copy">
+        <p>先前因人工填寫出口文件較易疏漏，我請 AI 寫好 Excel VBA 程式碼，利用彈出視窗引導依序填寫資訊，避免遺漏或誤植。</p>
+        <ul>
+          <li>常用的答案格式已預設，通常只需更改日期，，品項，數量，其他直接按確定。</li>
+          <li>答完後自動填進文件對應的欄位，金額也自動轉成英文，避免人工輸入錯誤。</li>
+        </ul>
+        <p class="note">右邊是用網頁重做的示意版，內容是範例資料，不是公司文件。按「輸入」試試看。</p>
+      </div>
+      <div>
+        <div class="window" id="xl">
+          <div class="titlebar"><span>出口文件.xlsx</span><span>DEMO</span></div>
+          <div class="ribbon"><button type="button" class="xbtn" id="open">輸入</button><span>按下按鈕，開始填寫</span></div>
+          <div class="sheet">
+            <table class="grid" aria-label="出口文件範例欄位">
+              <thead><tr><th></th><th>A</th><th>B</th></tr></thead>
+              <tbody id="grid"></tbody>
+            </table>
+          </div>
+          <div class="status" id="status" role="status"></div>
+          <div class="dlg" id="dlg" hidden>
+            <div class="dlgbox" role="dialog" aria-modal="true" aria-labelledby="dq">
+              <div class="dlgtitle"><span>輸入資料</span><span id="dstep"></span></div>
+              <div class="dlgbody">
+                <label id="dq" for="da"></label>
+                <input id="da" autocomplete="off">
+                <div class="dhint" id="dhint"></div>
+                <div class="dbtns"><button type="button" class="btn" id="dok">確定</button><button type="button" class="btn ghost" id="dcancel">取消</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="fit-h">
+    <div class="head">
+      <p class="label">想往哪裡走</p>
+      <h2 id="fit-h">把製造業的實務經驗，帶進企業流程與系統</h2>
+    </div>
+    <div class="fit">
+      <div><h3>營運分析</h3><p>每天要整合訂單、生產進度、產能與交期資訊，習慣從資料看出瓶頸，再提出建議。</p></div>
+      <div><h3>ERP / 企業系統相關職務</h3><p>熟悉訂單到出貨的實際作業流程，也做過 Excel VBA 輔助工具，想進一步累積系統應用與導入的專業。</p></div>
+      <div><h3>流程改善</h3><p>從前置確認、客訴分析到排程調整，習慣先找出資訊落差，再提出各單位做得到的方法。</p></div>
+      <div><h3>採購助理</h3><p>長期與生產、倉儲、物流協調交付，面對原料短缺與交期變動時，知道要追蹤什麼、問誰。</p></div>
+    </div>
+  </section>
+
+  <section class="info" aria-label="基本資料">
+    <div>
+      <h3>技能</h3>
+      <ul>
+        <li>訂單管理</li>
+        <li>生產協調</li>
+        <li>產能與交期規劃</li>
+        <li>Excel 資料整理與報表製作</li>
+        <li>AI 輔助</li>
+      </ul>
+    </div>
+    <div>
+      <h3>語言</h3>
+      <ul>
+        <li class="row"><span>英文</span><span class="pips" aria-label="5 分中的 4 分"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b></b></span></li>
+        <li class="row"><span>台語</span><span class="pips" aria-label="5 分中的 5 分"><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b><b class="on"></b></span></li>
+      </ul>
+    </div>
+    <div class="edu">
+      <h3>學歷</h3>
+      <strong>旅運管理系（四技畢業）</strong>
+      <span>國立高雄餐旅大學<br>2010.09 – 2014.06</span>
+    </div>
+  </section>
+
+  <footer class="contact">
+    <div>
+      <h2>歡迎聯絡</h2>
+      <p>目前希望投入企業流程改善、營運分析或 ERP / 企業系統相關職務。</p>
+    </div>
+    <div class="mail">
+      <code id="mail">coracorajiji@gmail.com</code>
+      <button type="button" class="btn ghost" id="copy">複製信箱</button>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  /* ---- Route map ---- */
+  var stops = [
+    { t: "接單與前置確認",
+      d: ["負責客戶訂單管理，掌握從接單到出貨的主要作業流程。", "正式生產前，確認訂單資訊與前置條件。"],
+      f: [{ p: "訂單資訊在各單位之間傳遞時有落差，生產前才發現生產條件不清楚或難以執行。",
+            a: "提出訂單審閱與簽核機制，讓各單位在正式生產前先確認可行性、交期與確保前置需求到位。" }] },
+    { t: "生產協調",
+      d: ["整合訂單、生產進度、產能狀況與客戶交期需求。", "與生產、倉儲、物流等單位協調可執行的交付安排。"],
+      f: [{ p: "客訴發生後，各單位對問題出在哪個環節各說各話。",
+            a: "先整理完整製造流程，再逐一檢視可能出問題的環節與後續影響，讓跨部門討論與資訊同步有共同基準及後續改善的共識。" },
+          { p: "日常作業中，各單位之間有資訊落差與執行問題。",
+            a: "持續觀察，並向主管提出流程與作業方式的改善建議。" }] },
+    { t: "交期與異常處理",
+      d: ["面對原料短缺、產能限制、交期變動時，協同生產單位評估排程與交期。", "追蹤異常，協調相關單位調整執行計畫。"],
+      f: [{ p: "急單進來時，產能與資源有限，優先順序不明確。",
+            a: "分析訂單優先順序與產能限制，提出排程調整建議。" }] },
+    { t: "出貨安排",
+      d: ["負責出貨安排，並與倉儲、物流確認出貨細節。"],
+      f: [{ p: "客戶下單模式與公司產能、倉儲、出貨安排不一定對得上。",
+            a: "從營運與成本角度分析訂單，提出報價方式調整與分批出貨建議，兼顧客戶需求與內部安排。" }] },
+    { t: "出口文件",
+      d: ["處理出口文件，確保資訊正確、完整。"],
+      f: [{ p: "人工輸入容易漏掉資訊，英文金額也容易輸入錯誤。",
+            a: "請 AI 協助產生 Excel VBA 程式碼，使用彈出視窗引導的填寫工具。下方可以試用示意版。" }] }
+  ];
+  var tabs = Array.prototype.slice.call(document.querySelectorAll(".stop"));
+  function fill(id, arr) {
+    var el = document.getElementById(id); el.innerHTML = "";
+    arr.forEach(function (s) { var li = document.createElement("li"); li.textContent = s; el.appendChild(li); });
+  }
+  function fixes(arr) {
+    var el = document.getElementById("p-fix"); el.innerHTML = "";
+    arr.forEach(function (x) {
+      var li = document.createElement("li"); li.className = "pair";
+      [["問題", x.p], ["做法", x.a]].forEach(function (r) {
+        var b = document.createElement("b"); b.textContent = r[0];
+        var s = document.createElement("span"); s.textContent = r[1];
+        li.appendChild(b); li.appendChild(s);
+      });
+      el.appendChild(li);
+    });
+  }
+  function select(i, focus) {
+    tabs.forEach(function (b, k) { b.setAttribute("aria-selected", k === i ? "true" : "false"); b.tabIndex = k === i ? 0 : -1; });
+    document.getElementById("p-title").textContent = stops[i].t;
+    fill("p-do", stops[i].d); fixes(stops[i].f);
+    document.getElementById("panel").setAttribute("aria-labelledby", "t" + i);
+    if (focus) tabs[i].focus();
+  }
+  tabs.forEach(function (b, i) {
+    b.addEventListener("click", function () { select(i, false); });
+    b.addEventListener("keydown", function (e) {
+      var n = tabs.length, k = i;
+      if (e.key === "ArrowRight" || e.key === "ArrowDown") k = (i + 1) % n;
+      else if (e.key === "ArrowLeft" || e.key === "ArrowUp") k = (i + n - 1) % n;
+      else return;
+      e.preventDefault(); select(k, true);
+    });
+  });
+  select(0, false);
+
+  /* ---- Number to English amount ---- */
+  var ONES = ["", "ONE", "TWO", "THREE", "FOUR", "FIVE", "SIX", "SEVEN", "EIGHT", "NINE", "TEN", "ELEVEN", "TWELVE", "THIRTEEN", "FOURTEEN", "FIFTEEN", "SIXTEEN", "SEVENTEEN", "EIGHTEEN", "NINETEEN"];
+  var TENS = ["", "", "TWENTY", "THIRTY", "FORTY", "FIFTY", "SIXTY", "SEVENTY", "EIGHTY", "NINETY"];
+  function below1000(n) {
+    var s = [];
+    if (n >= 100) { s.push(ONES[Math.floor(n / 100)] + " HUNDRED"); n = n % 100; }
+    if (n >= 20) { s.push(TENS[Math.floor(n / 10)] + (n % 10 ? "-" + ONES[n % 10] : "")); }
+    else if (n > 0) { s.push(ONES[n]); }
+    return s.join(" ");
+  }
+  function words(n) {
+    if (n === 0) return "ZERO";
+    var scales = [[1e9, "BILLION"], [1e6, "MILLION"], [1e3, "THOUSAND"]], parts = [];
+    scales.forEach(function (sc) {
+      if (n >= sc[0]) { parts.push(below1000(Math.floor(n / sc[0])) + " " + sc[1]); n = n % sc[0]; }
+    });
+    if (n > 0) parts.push(below1000(n));
+    return parts.join(" ");
+  }
+  var CUR = { USD: "U.S. DOLLARS", EUR: "EUROS", JPY: "JAPANESE YEN" };
+  function amountWords(x, cur) {
+    var cents = Math.round(x * 100), d = Math.floor(cents / 100), c = cents % 100;
+    if (cur === "JPY") { d = Math.round(x); c = 0; }
+    var tail = c > 0 ? " AND " + (c < 10 ? "0" : "") + c + "/100 ONLY" : " ONLY";
+    return "SAY " + CUR[cur] + " " + words(d) + tail;
+  }
+  window.__amountWords = amountWords;
+
+  /* ---- Demo: button, dialogs, auto-fill ---- */
+  var $ = function (id) { return document.getElementById(id); };
+  var steps = [
+    { k: "inv", label: "發票號碼", q: "發票號碼：", d: "SAMPLE-001" },
+    { k: "date", label: "日期", q: "日期（YYYY-MM-DD）：", d: "2026-11-04", hint: "請確認發票日期。", re: /^\d{4}-\d{2}-\d{2}$/, bad: "請照 YYYY-MM-DD 填寫。" },
+    { k: "cust", label: "客戶名稱", q: "客戶名稱：", d: "Sample Customer Co." },
+    { k: "item", label: "品名", q: "品名：", d: "Plastic Parts (sample)" },
+    { k: "qty", label: "數量", q: "數量：", d: "1200", num: true },
+    { k: "price", label: "單價", q: "單價：", d: "1.85", num: true },
+    { k: "cur", label: "幣別", q: "幣別（USD / EUR / JPY）：", d: "USD", cur: true }
+  ];
+  var cur = { inv: "SAMPLE-001", date: "2026-11-04", cust: "Sample Customer Co.", item: "Plastic Parts (sample)", qty: "1200", price: "1.85", cur: "USD" };
+  function fmt(x, c) {
+    var dec = c === "JPY" ? 0 : 2;
+    return x.toLocaleString("en-US", { minimumFractionDigits: dec, maximumFractionDigits: dec });
+  }
+  function rowsOf(a) {
+    var t = parseFloat(a.qty) * parseFloat(a.price);
+    return [
+      ["發票號碼", a.inv], ["日期", a.date], ["客戶名稱", a.cust], ["品名", a.item],
+      ["數量", a.qty], ["單價", a.price], ["幣別", a.cur],
+      ["總金額", a.cur + " " + fmt(t, a.cur)], ["英文大寫", amountWords(t, a.cur)]
+    ];
+  }
+  function render(flash) {
+    var g = $("grid"); g.innerHTML = "";
+    rowsOf(cur).forEach(function (r, i) {
+      var tr = document.createElement("tr");
+      var n = document.createElement("th"); n.textContent = i + 1;
+      var l = document.createElement("td"); l.className = "l"; l.textContent = r[0];
+      var v = document.createElement("td"); v.className = "v" + (flash ? " flash" : ""); v.textContent = r[1];
+      tr.appendChild(n); tr.appendChild(l); tr.appendChild(v); g.appendChild(tr);
+    });
+  }
+  var idx = 0, draft = {};
+  function ask() {
+    var s = steps[idx];
+    $("dstep").textContent = (idx + 1) + " / " + steps.length;
+    $("dq").textContent = s.q;
+    $("da").value = cur[s.k];
+    $("dhint").className = "dhint"; $("dhint").textContent = s.hint || "請輸入內容，確認無誤即可按下確定。";
+    $("da").focus(); $("da").select();
+  }
+  function closeDlg() { $("dlg").hidden = true; $("open").focus(); }
+  $("open").addEventListener("click", function () {
+    idx = 0; draft = {}; $("status").className = "status"; $("status").textContent = "";
+    $("dlg").hidden = false; ask();
+  });
+  function ok() {
+    var s = steps[idx], v = $("da").value.trim(), bad = "";
+    if (v === "") bad = "請填寫。";
+    else if (s.re && !s.re.test(v)) bad = s.bad;
+    else if (s.num && !(isFinite(parseFloat(v)) && parseFloat(v) >= 0)) bad = "請輸入數字。";
+    else if (s.cur) { v = v.toUpperCase(); if (!CUR[v]) bad = "請填 USD、EUR 或 JPY。"; }
+    if (bad) { $("dhint").className = "dhint bad"; $("dhint").textContent = bad; $("da").focus(); return; }
+    draft[s.k] = v; idx++;
+    if (idx < steps.length) { ask(); return; }
+    cur = draft; render(true); closeDlg();
+    $("status").className = "status good";
+    $("status").textContent = "已將 " + steps.length + " 項答案填入對應欄位，金額已轉成英文。";
+  }
+  $("dok").addEventListener("click", ok);
+  $("dcancel").addEventListener("click", closeDlg);
+  $("dlg").addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); ok(); }
+    else if (e.key === "Escape") { e.preventDefault(); closeDlg(); }
+  });
+  render(false);
+
+  /* ---- Copy email ---- */
+  $("copy").addEventListener("click", function () {
+    var btn = $("copy"), txt = $("mail").textContent;
+    function done(ok) { btn.textContent = ok ? "已複製" : "請長按信箱文字複製"; setTimeout(function () { btn.textContent = "複製信箱"; }, 2000); }
+    try {
+      navigator.clipboard.writeText(txt).then(function () { done(true); }, function () { sel(); done(false); });
+    } catch (err) { sel(); done(false); }
+    function sel() { var r = document.createRange(); r.selectNodeContents($("mail")); var s = window.getSelection(); s.removeAllRanges(); s.addRange(r); }
+  });
+})();
+</script>
+
+</body></html>
